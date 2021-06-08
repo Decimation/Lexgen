@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="RestSharp" Version="106.11.8-alpha.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Novus">
+      <HintPath>..\..\Novus\Novus\bin\Release\net5.0\Novus.dll</HintPath>
+    </Reference>
+    <Reference Include="SimpleCore">
+      <HintPath>..\..\..\RiderProjects\SimpleCore\SimpleCore\bin\Release\net5.0\SimpleCore.dll</HintPath>
+    </Reference>
+    <Reference Include="SimpleCore.Net">
+      <HintPath>..\..\..\RiderProjects\SimpleCore\SimpleCore.Net\bin\Release\net5.0\SimpleCore.Net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
