@@ -86,8 +86,12 @@ namespace Lexgen
 		[JsonProperty("url")]
 		public string Url { get; set; }
 
+
+		/// <summary>
+		/// <see cref="DateTime"/>
+		/// </summary>
 		[JsonProperty("publication_date")]
-		public DateTime PublicationDate { get; set; }
+		public object PublicationDate { get; set; }
 
 		[JsonProperty("author")]
 		public string Author { get; set; }
@@ -114,7 +118,7 @@ namespace Lexgen
 		public int Profanity { get; set; }
 
 		[JsonProperty("id")]
-		public int Id { get; set; }
+		public string Id { get; set; }
 
 		[JsonProperty("sentence")]
 		public string Sentence { get; set; }

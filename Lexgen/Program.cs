@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-using Novus.Utilities;
-using Novus.Win32;
-using RestSharp;
+﻿using RestSharp;
 using SimpleCore.Utilities;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using Novus.Win32;
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable StringLiteralTypo
@@ -20,70 +17,110 @@ namespace Lexgen
 {
 	public static class Program
 	{
+		
 		private static void Main(string[] args)
 		{
+			//Console.OutputEncoding = Encoding.Unicode;
+			//Console.InputEncoding  = Encoding.Unicode;
 
 
-			var rc = new RestClient("https://tuna.thesaurus.com/pageData/{word}");
+			Native.SetConsoleOutputCP(Native.Win32UnicodeCP);
+			
+			if (args.Any()) {
+				Show(args.First());
 
-			var req = new RestRequest(Method.GET);
-			req.AddUrlSegment("word", "root");
-
-			var res = rc.Execute<Root>(req);
-
-			var data = res.Data;
-
-
-			foreach (var definition in data.Data.DefinitionData.Definitions) {
-				Console.WriteLine($"{definition.Definition} {definition.Pos}");
-
-				foreach (var synonym in definition.Synonyms) {
-					Console.WriteLine($"{Strings.Indent}{synonym}");
-				}
 			}
-
-			Console.OutputEncoding = Encoding.Unicode;
-			Console.InputEncoding  = Encoding.Unicode;
-
-			Console.WriteLine(get("word", "la"));
-			Console.WriteLine(get2("word", "la"));
-		}
-
-		static string get2(string a, string b)
-		{
-			return py("-c \"from googletrans import * " + Environment.NewLine +
-			          $"print(Translator().translate('{a}', dest='{b}'))\"");
-
 		}
 
 
-		static string py(string args)
+		private static string CallPy(string args)
 		{
 			var startInfo = new ProcessStartInfo("python")
 			{
 				Arguments              = args,
 				UseShellExecute        = false,
-				RedirectStandardOutput = true
+				RedirectStandardOutput = true,
+				StandardOutputEncoding = Native.Win32Unicode
 			};
-
 
 			using var process = Process.Start(startInfo);
 
-			using var reader = process.StandardOutput;
+			using var reader = process!.StandardOutput;
 
 			string result = reader.ReadToEnd();
 
 			return result;
 		}
 
-		static string get(string a, string b)
+		private static void Show(string s)
 		{
+			string value = new('-', 20);
 
-			return py("-c \"from translatepy import * " + Environment.NewLine +
-			          $"print(Translator().translate('{a}', '{b}'))\"");
+			Console.WriteLine("[Thesaurus]");
+			Thesaurus(s);
+			Console.WriteLine(value);
+			
+			Translate(s, "la");
+			Console.WriteLine(value);
+			
+			Translate(s, "el");
+			Console.WriteLine(value);
+			
+			Translate(s, "fr");
+			Console.WriteLine(value);
+			
+			Translate(s, "ja");
+		}
 
+		private static void Thesaurus(string s)
+		{
+			var rc = new RestClient("https://tuna.thesaurus.com/pageData/{word}");
+
+			var req = new RestRequest(Method.GET);
+			req.AddUrlSegment("word", s);
+
+			var res = rc.Execute<Root>(req);
+			//var data=JsonConvert.DeserializeObject<Root>(res.Content);
+
+			var data = res.Data;
+
+			var dataDefinitions = data.Data.DefinitionData.Definitions;
+
+			foreach (var definition in dataDefinitions) {
+				Console.WriteLine($"{definition.Definition} ({definition.Pos})");
+
+				var synonyms = definition.Synonyms.Take(10);
+
+				foreach (var synonym in synonyms) {
+					Console.WriteLine($"{Strings.Indent}{synonym}");
+				}
+			}
+		}
+
+		private static void Translate(string src, string lang)
+		{
+			//print(Language('la').name)
+
+
+			string t2x = CallPy("-c \"from translatepy import * " + Environment.NewLine +
+			                    $"print(Language('{lang}').name)\"").Trim();
+
+
+			Console.WriteLine($"[{t2x}]");
+
+			string t1 = CallPy("-c \"from googletrans import * " + Environment.NewLine +
+			                   $"print(Translator().translate('{src}', dest='{lang}').text)\"").Trim();
+
+			string t1x = CallPy("-c \"from googletrans import * " + Environment.NewLine +
+			                    $"print(Translator().translate('{src}', dest='{lang}').pronunciation)\"").Trim();
+
+			
+			Console.WriteLine($"{Strings.Indent}[#1] | {t1} ({t1x})");
+
+			string t2 = CallPy("-c \"from translatepy import * " + Environment.NewLine +
+			                   $"print(Translator().translate('{src}', '{lang}'))\"").Trim();
+
+			Console.WriteLine($"{Strings.Indent}[#2] | {t2}");
 		}
 	}
-
-	
 }
